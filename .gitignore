@@ -1,0 +1,45 @@
+# =============================================================================
+# Dependencies & build output
+# =============================================================================
+node_modules/
+.pnp
+.pnp.js
+.next/
+out/
+build/
+dist/
+coverage/
+
+# =============================================================================
+# SECRETS — must NEVER be committed
+# -----------------------------------------------------------------------------
+# The manifest-signing private key signs every OTA update. If it leaks, anyone
+# can push a malicious JS bundle to every installed FitArch app. It lives only
+# as (a) a local dev copy and (b) a runtime volume mount scp'd to the server —
+# never in git, never in the Docker image.
+# =============================================================================
+*.pem
+code-signing-keys/
+
+# =============================================================================
+# OTA update payloads
+# -----------------------------------------------------------------------------
+# Produced by `expo export` and delivered to the server via rsync. Build
+# artifacts, not source — and potentially large.
+# =============================================================================
+updates/
+
+# =============================================================================
+# Local env (production config is injected via docker-compose, not committed)
+# =============================================================================
+.env*.local
+
+# =============================================================================
+# OS / editor / logs
+# =============================================================================
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel

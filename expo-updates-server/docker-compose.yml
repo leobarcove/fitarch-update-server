@@ -1,0 +1,37 @@
+# FitArch self-hosted Expo update server.
+#
+# Runs as its OWN compose project and joins the existing Traefik network, so the
+# live ERPNext compose stack is never modified. Traefik (already running) auto-
+# discovers this container via the labels below and issues a Let's Encrypt cert
+# for ota.fitarch.my on first request (HTTP-01 challenge — needs the DNS A record).
+services:
+  expo-ota:
+    build:
+      context: .
+    image: fitarch-expo-ota:latest
+    container_name: fitarch-expo-ota
+    restart: unless-stopped
+    environment:
+      # Drives absolute asset URLs in the manifest. NOT named HOSTNAME on purpose:
+      # Next.js treats HOSTNAME as its socket bind address and would crash.
+      PUBLIC_BASE_URL: https://ota.fitarch.my
+      PRIVATE_KEY_PATH: code-signing-keys/private-key.pem
+    volumes:
+      # Update payloads — populated by the publish script (rsync), survives rebuilds.
+      - ./updates:/app/updates
+      # Manifest signing key — scp'd here out-of-band, never in git or the image.
+      - ./code-signing-keys/private-key.pem:/app/code-signing-keys/private-key.pem:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frappe_docker_frappe_network"
+      - "traefik.http.routers.expo-ota.rule=Host(`ota.fitarch.my`)"
+      - "traefik.http.routers.expo-ota.entrypoints=websecure"
+      - "traefik.http.routers.expo-ota.tls.certresolver=main-resolver"
+      - "traefik.http.services.expo-ota.loadbalancer.server.port=3000"
+
+networks:
+  traefik:
+    external: true
+    name: frappe_docker_frappe_network

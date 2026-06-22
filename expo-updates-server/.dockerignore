@@ -1,0 +1,7 @@
+node_modules
+.next
+.git
+.gitignore
+# updates payload + private key are mounted as volumes at runtime, not built in
+updates
+code-signing-keys/private-key.pem
