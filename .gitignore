@@ -31,8 +31,11 @@ updates/
 
 # =============================================================================
 # Local env (production config is injected via docker-compose, not committed)
+# Includes the compose .env that sets OTA_HOST per environment.
 # =============================================================================
-.env*.local
+.env
+.env.*
+!.env.example
 
 # =============================================================================
 # OS / editor / logs

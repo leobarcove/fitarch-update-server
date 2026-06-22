@@ -3,7 +3,12 @@
 # Runs as its OWN compose project and joins the existing Traefik network, so the
 # live ERPNext compose stack is never modified. Traefik (already running) auto-
 # discovers this container via the labels below and issues a Let's Encrypt cert
-# for ota.fitarch.my on first request (HTTP-01 challenge — needs the DNS A record).
+# for ${OTA_HOST} on first request (HTTP-01 challenge — needs the DNS A record).
+#
+# The serving hostname is parameterised via OTA_HOST (set in a sibling .env file)
+# so the same compose serves the test host (ota.smitherytech.com) and the prod
+# host (ota.fitarch.my) with only an env change — no edits to this file.
+#   echo "OTA_HOST=ota.smitherytech.com" > .env   # then: docker compose up -d --build
 services:
   expo-ota:
     build:
@@ -14,7 +19,7 @@ services:
     environment:
       # Drives absolute asset URLs in the manifest. NOT named HOSTNAME on purpose:
       # Next.js treats HOSTNAME as its socket bind address and would crash.
-      PUBLIC_BASE_URL: https://ota.fitarch.my
+      PUBLIC_BASE_URL: "https://${OTA_HOST:?set OTA_HOST in .env, e.g. ota.smitherytech.com}"
       PRIVATE_KEY_PATH: code-signing-keys/private-key.pem
     volumes:
       # Update payloads — populated by the publish script (rsync), survives rebuilds.
@@ -26,7 +31,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=frappe_docker_frappe_network"
-      - "traefik.http.routers.expo-ota.rule=Host(`ota.fitarch.my`)"
+      - "traefik.http.routers.expo-ota.rule=Host(`${OTA_HOST:?set OTA_HOST in .env}`)"
       - "traefik.http.routers.expo-ota.entrypoints=websecure"
       - "traefik.http.routers.expo-ota.tls.certresolver=main-resolver"
       - "traefik.http.services.expo-ota.loadbalancer.server.port=3000"
