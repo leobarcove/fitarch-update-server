@@ -40,10 +40,15 @@ export async function getPrivateKeyAsync() {
   return pemBuffer.toString('utf8');
 }
 
-export async function getLatestUpdateBundlePathForRuntimeVersionAsync(runtimeVersion: string) {
-  const updatesDirectoryForRuntimeVersion = `updates/${runtimeVersion}`;
+export async function getLatestUpdateBundlePathForRuntimeVersionAsync(
+  runtimeVersion: string,
+  channel: string = 'production',
+) {
+  // Updates live under updates/<channel>/<runtimeVersion>/<epoch>/ so staging and
+  // production publishes are fully isolated from each other.
+  const updatesDirectoryForRuntimeVersion = `updates/${channel}/${runtimeVersion}`;
   if (!fsSync.existsSync(updatesDirectoryForRuntimeVersion)) {
-    throw new Error('Unsupported runtime version');
+    throw new Error(`Unsupported runtime version / channel (${channel})`);
   }
 
   const filesInUpdatesDirectory = await fs.readdir(updatesDirectoryForRuntimeVersion);

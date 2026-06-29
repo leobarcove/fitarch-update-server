@@ -52,9 +52,22 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
     return;
   }
 
+  // Channel segregates updates (e.g. staging vs production) so a publish to one
+  // never reaches the other. The app sends `expo-channel-name` based on the
+  // `channel` set in its EAS build profile. Default to 'production' if absent.
+  const channelMaybeArray = req.headers['expo-channel-name'] ?? req.query['channel-name'];
+  const channel =
+    (Array.isArray(channelMaybeArray) ? channelMaybeArray[0] : channelMaybeArray) ?? 'production';
+
+  // Diagnostic request logging (so we can see exactly what devices ask for).
+  console.log(
+    `[manifest] platform=${platform} runtime=${runtimeVersion} channel=${channel} ` +
+      `expect-sig=${req.headers['expo-expect-signature'] ? 'yes' : 'no'} ua=${(req.headers['user-agent'] || '').slice(0, 40)}`,
+  );
+
   let updateBundlePath: string;
   try {
-    updateBundlePath = await getLatestUpdateBundlePathForRuntimeVersionAsync(runtimeVersion);
+    updateBundlePath = await getLatestUpdateBundlePathForRuntimeVersionAsync(runtimeVersion, channel);
   } catch (error: any) {
     res.statusCode = 404;
     res.json({
